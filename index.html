@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון שכר חינוך - דוח חודשי</title>
+
+    <!-- Fonts: Google Fonts (Heebo for modern Hebrew) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Controls -->
+        <aside class="sidebar no-print">
+            <header>
+                <h1>מערכת שכר</h1>
+                <p>חינוך ונוער</p>
+            </header>
+
+            <div class="control-group">
+                <label for="month-select">חודש עבודה</label>
+                <input type="month" id="month-select" value="2025-11">
+            </div>
+
+            <div class="actions">
+                <button id="btn-add-shift" class="btn primary">
+                    <span class="icon">+</span> הוסף משמרת
+                </button>
+                <button id="btn-import" class="btn secondary">
+                    <span class="icon">📥</span> יבוא טקסט/וואטסאפ
+                </button>
+                <button id="btn-print" class="btn secondary">
+                    <span class="icon">🖨️</span> שמור כ-PDF
+                </button>
+            </div>
+
+            <div class="debug-panel">
+                <h3>נתונים מהירים</h3>
+                <div class="stat-row">
+                    <span>סה"כ שעות:</span>
+                    <span id="total-hours-disp">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>תקן שבועי:</span>
+                    <span id="weekly-status-disp">תקין</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="report-header print-only">
+                <h2>דוח שעות עבודה - צוות חינוך</h2>
+                <div class="meta-info">
+                    <span id="print-month">נובמבר 2025</span> |
+                    <span>שם עובד: ישראל ישראלי</span>
+                </div>
+            </header>
+
+            <!-- Shifts Table -->
+            <div class="table-container">
+                <table id="payroll-table">
+                    <thead>
+                        <tr>
+                            <th>תאריך</th>
+                            <th>יום</th>
+                            <th>שעות עבודה</th>
+                            <th>תקן (קבוע)</th>
+                            <th>100% נוסף</th>
+                            <th>125%</th>
+                            <th>150%</th>
+                            <th>לינת לילה</th>
+                            <th>ניכוי שעות</th>
+                            <th>הערות</th>
+                            <th class="no-print">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows will be injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <footer class="report-footer print-only">
+                <p>הדוח נוצר אוטומטית ע"י מערכת שכר חכמה.</p>
+                <div class="signatures">
+                    <div>חתימת עובד</div>
+                    <div>חתימת מנהל</div>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <dialog id="shift-modal" class="modal">
+        <form id="shift-form">
+            <h3>עריכת משמרת</h3>
+            <div class="form-row">
+                <label>תאריך:</label>
+                <input type="date" id="modal-date" required>
+            </div>
+            <div class="form-row">
+                <label>התחלה:</label>
+                <input type="time" id="modal-start" required>
+            </div>
+            <div class="form-row">
+                <label>סיום:</label>
+                <input type="time" id="modal-end" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn text"
+                    onclick="document.getElementById('shift-modal').close()">ביטול</button>
+                <button type="submit" class="btn primary">שמור</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="import-modal" class="modal">
+        <form id="import-form">
+            <h3>יבוא משמרות מרוכז</h3>
+            <p>הדבק כאן את רשימת המשמרות (ניתן להעתיק ישירות מוואטסאפ).</p>
+            <p><small>פורמט: 20.11- 06:30-08:00</small></p>
+            <div class="form-row">
+                <textarea id="import-text" rows="8" style="width:100%; padding:0.5rem;"
+                    placeholder="20.11- 6:30-8:00, 13:30-22:00..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn text"
+                    onclick="document.getElementById('import-modal').close()">ביטול</button>
+                <button type="submit" class="btn primary">יבא נתונים</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Chat Widget (Stable Version) -->
+    <div id="chat-widget" class="chat-widget collapsed no-print">
+        <div class="chat-header" onclick="toggleChat()">
+            <span>👋 עוזר אישי</span>
+            <span id="chat-toggle-icon">▲</span>
+        </div>
+        <div class="chat-body">
+            <div id="chat-messages" class="chat-messages">
+                <div class="msg system">היי! אני העוזר האישי שלך.<br>אפשר לבקש ממני:<br>- "תוסיף משמרת מחר מ-8 עד
+                    4"<br>- "סיכום חודשי"</div>
+            </div>
+            <form id="chat-form" class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="כתוב כאן..." autocomplete="off">
+                <button type="submit">שלח</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="logic.js"></script>
+    <script src="assistant.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
